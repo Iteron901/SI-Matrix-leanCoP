@@ -7,12 +7,16 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Text.RegularExpressions;
+using System.Windows;
 
 namespace LeanCop
 {
     class DrawingManager
     {
         private Canvas canvas;
+        private static double fontSize = 40;
+        private double[] rowCoords;
+        private double[] colCoords;
 
         public DrawingManager(Canvas canvas)
         {
@@ -27,6 +31,7 @@ namespace LeanCop
 
             drawConnections(connections);
             drawMatrix(matrix2d);
+
         }
 
         private string[,] get2dMatrix(string matrix)
@@ -70,24 +75,87 @@ namespace LeanCop
             {
                 for (int y = 0; y < height; y++)
                 {
-                    putText(x * 150.0, y * 150.0, matrix[x, y]);
+                    Point position = getPosition(x, y);
+                    putText(position.X, position.Y, matrix[x, y]);
                 }
             }
         }
 
+        private Point getPosition(int x, int y)
+        {
+            return new Point(x*100.0+50, y*100.0+50);
+        }
+
         private void drawConnections(string connections)
         {
-            
+            var re = new Regex(@"\([0-9]+,[0-9]+\),\([0-9]+,[0-9]+\)");
+            String[] pairs = re.Matches(connections)
+                .OfType<Match>()
+                .Select(m => m.Groups[0].Value)
+                .ToArray();
+
+            var num = new Regex(@"[0-9]+");
+            foreach (String pair in pairs)
+            {
+                String[] nums = num.Matches(pair)
+                    .OfType<Match>()
+                    .Select(m => m.Groups[0].Value)
+                    .ToArray();
+                Line line = new Line();
+                var start = getPosition(int.Parse(nums[0]), int.Parse(nums[1]));
+                var end = getPosition(int.Parse(nums[2]), int.Parse(nums[3]));
+
+                drawConnection(start, end);
+
+            }
+        }
+
+        private void drawConnection(Point start, Point end)
+        {
+            Point mid = new Point();
+            mid.X = (start.X + end.X) / 2;
+            mid.Y = (start.Y + end.Y) / 2;
+            if (start.Y == end.Y)
+                mid.Y -= 40;
+
+            BezierSegment b = new BezierSegment(start, mid, end, true);
+            PathGeometry path = new PathGeometry();
+            PathFigure pathFigure = new PathFigure();
+            pathFigure.StartPoint = start;
+            path.Figures.Add(pathFigure);
+
+            pathFigure.Segments.Add(b);
+            System.Windows.Shapes.Path p = new Path();
+            p.Stroke = Brushes.Red;
+            p.StrokeThickness = 2;
+            p.Data = path;
+
+            canvas.Children.Add(p);
         }
 
         private void putText(double x, double y, string text)
         {
-            TextBlock tb = new TextBlock();
-            tb.Text = text;
-            tb.FontSize = 40;
-            Canvas.SetLeft(tb, x);
-            Canvas.SetTop(tb, y);
+            TextBlock tb = new TextBlock { Text = text, FontSize = fontSize };
+
+            tb.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
+            tb.Arrange(new Rect(tb.DesiredSize));
+
+            var offsetX = -tb.ActualWidth / 2;
+            var offsetY = -tb.ActualHeight / 2;
+
+            Canvas.SetLeft(tb, x + offsetX);
+            Canvas.SetTop(tb, y + offsetY);
             canvas.Children.Add(tb);
+        }
+
+        private Size displaySize(String text)
+        {
+            TextBlock tb = new TextBlock { Text = text, FontSize = fontSize };
+
+            tb.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
+            tb.Arrange(new Rect(tb.DesiredSize));
+
+            return new Size(tb.ActualWidth, tb.ActualHeight);
         }
     }
 }
