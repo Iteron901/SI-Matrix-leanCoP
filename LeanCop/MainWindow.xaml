@@ -7,7 +7,7 @@
         <Button x:Name="drawButton" Content="Rysuj" Margin="432,0,0,10" HorizontalAlignment="Left" Width="75" Height="20" VerticalAlignment="Bottom" Click="drawButton_Click"/>
         <TextBox x:Name="matrixTextbox" Margin="10,0,0,10" TextWrapping="Wrap" Text="[[q],[-q,r],[-r]]" HorizontalAlignment="Left" Width="191" Height="20" VerticalAlignment="Bottom"/>
         <TextBox x:Name="connectionTextbox" TextWrapping="Wrap" Text="[[(0,0),(1,0)],[(1,1),(2,0)]]" Margin="206,0,0,10" HorizontalAlignment="Left" Width="221" Height="20" VerticalAlignment="Bottom"/>
-        <ScrollViewer Height="274" Margin="10,10,10,35" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Margin="10,10,10,35" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
             <Canvas x:Name="canvas" Margin="0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
         </ScrollViewer>
 
