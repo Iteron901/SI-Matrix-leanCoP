@@ -16,20 +16,24 @@ namespace LeanCop
         private Canvas canvas;
         private static double fontSize = 30;
         private String[,] matrix;
+        private double[] _colWidth;
+        private double[] _colOffset;
 
         public DrawingManager(Canvas canvas)
         {
             this.canvas = canvas;
         }
 
-        public void drawProof(String matrix, String connections)
+        public void drawProof(String matrixString, String connections)
         {
             canvas.Children.Clear();
 
-            this.matrix = get2dMatrix(matrix);
+            this.matrix = get2dMatrix(matrixString);
+            this._colWidth = new double[this.matrix.GetLength(0)];
+            this._colOffset = new double[this.matrix.GetLength(0)];
 
-            drawConnections(connections, this.matrix);
-            drawMatrix(this.matrix);
+            drawConnections(connections);
+            drawMatrix();
 
             Size canvasSize = drawingSize();
             canvas.Width = canvasSize.Width;
@@ -38,8 +42,7 @@ namespace LeanCop
 
         private Size drawingSize()
         {
-            int cols = this.matrix.GetLength(0);
-            double width = colOffset(this.matrix, cols - 1) + colWidth(this.matrix, cols - 1);
+            double width = colOffset(lastCol()) + colWidth(lastCol());
             double heigth = matrix.GetLength(1) * 100 - 50;
             return new Size(width, heigth);
         }
@@ -78,7 +81,7 @@ namespace LeanCop
            return ret;
         }
 
-        private void drawMatrix(string[,] matrix)
+        private void drawMatrix()
         {
             int width = matrix.GetLength(0);
             int height = matrix.GetLength(1);
@@ -88,14 +91,18 @@ namespace LeanCop
                 for (int y = 0; y < height; y++)
                 {
                     Point position = getPosition(x, y);
-                    double textWidth = colWidth(matrix, x);
+                    double textWidth = colWidth(x);
                     putText(position.X, position.Y, matrix[x, y], textWidth);
                 }
             }
         }
 
-        private double colWidth(String[,] matrix, int n)
+        private double colWidth(int n)
         {
+            // Lazy evaluation
+            if (this._colWidth[n] != 0)
+                return this._colWidth[n];
+
             int height = matrix.GetLength(1);
 
             double maxWidth = 0;
@@ -107,28 +114,32 @@ namespace LeanCop
                     maxWidth = k;
             }
 
-            return maxWidth;
+            return this._colWidth[n] = maxWidth;
         }
 
-        private double colOffset(String[,] matrix, int n)
+        private double colOffset(int n)
         {
+            // Lazy evaluation
+            if (this._colOffset[n] != 0)
+                return this._colOffset[n];
+
             double offset = 0;
             for (int i = 0; i < n; i++)
             {
-                offset += colWidth(matrix, i);
+                offset += colWidth(i);
             }
             offset += n * 20;
 
-            return offset;
+            return this._colOffset[n] = offset;
         }
 
         private Point getPosition(int x, int y)
         {
             
-            return new Point(colOffset(this.matrix, x), y*100);
+            return new Point(colOffset(x), y*100);
         }
 
-        private void drawConnections(string connections, string[,] matrix)
+        private void drawConnections(string connections)
         {
             var re = new Regex(@"\([0-9]+,[0-9]+\),\([0-9]+,[0-9]+\)");
             String[] pairs = re.Matches(connections)
@@ -146,17 +157,17 @@ namespace LeanCop
                 Line line = new Line();
 
 
-                drawConnection(int.Parse(nums[0]), int.Parse(nums[1]), int.Parse(nums[2]), int.Parse(nums[3]), matrix);
+                drawConnection(int.Parse(nums[0]), int.Parse(nums[1]), int.Parse(nums[2]), int.Parse(nums[3]));
 
             }
         }
 
-        private void drawConnection(int x1, int y1, int x2, int y2, String[,] matrix)
+        private void drawConnection(int x1, int y1, int x2, int y2)
         {
             var off1 = displaySize(matrix[x1, y1]);
-            off1.Width = colWidth(matrix, x1) - off1.Width / 2;
+            off1.Width = colWidth(x1) - off1.Width / 2;
             var off2 = displaySize(matrix[x2, y2]);
-            off2.Width = colWidth(matrix, x2) - off2.Width / 2;
+            off2.Width = colWidth(x2) - off2.Width / 2;
 
             Point start = getPosition(x1, y1);
             Point end = getPosition(x2, y2);
@@ -167,7 +178,7 @@ namespace LeanCop
             mid.X = (start.X + end.X) / 2;
             mid.Y = (start.Y + end.Y) / 2;
             if (start.Y == end.Y)
-                mid.Y -= 40;
+                mid.Y += y1 == lastRow() ? 40 : -40;
 
             BezierSegment b = new BezierSegment(start, mid, end, true);
             PathGeometry path = new PathGeometry();
@@ -202,6 +213,16 @@ namespace LeanCop
             tb.Arrange(new Rect(tb.DesiredSize));
 
             return new Size(tb.ActualWidth, tb.ActualHeight);
+        }
+
+        private int lastCol()
+        {
+            return this.matrix.GetLength(0) - 1;
+        }
+
+        private int lastRow()
+        {
+            return this.matrix.GetLength(1) - 1;
         }
     }
 }
