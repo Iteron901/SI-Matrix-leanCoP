@@ -27,11 +27,24 @@ namespace LeanCop
 
         private void drawButton_Click(object sender, RoutedEventArgs e)
         {
-            String matrix = matrixTextbox.Text;
-            String connections = connectionTextbox.Text;
+            String[,] matrix;
+            List<Connection> connections;
 
-            var dm = new DrawingManager(canvas);
-            dm.drawProof(matrix, connections);
+            try
+            {
+                matrix = ParameterParser.parseMatrix(matrixTextbox.Text);
+                connections = ParameterParser.parseConnections(connectionTextbox.Text);
+
+                var dm = new DrawingManager(canvas);
+                dm.drawProof(matrix, connections);
+
+                matrixTextbox.Foreground = Brushes.Black;
+                connectionTextbox.Foreground = Brushes.Black;
+            } catch (Exception ex) {
+                var s = ex.TargetSite;
+                matrixTextbox.Foreground = Brushes.Red;
+                connectionTextbox.Foreground = Brushes.Red;
+            }
         }
 
     }

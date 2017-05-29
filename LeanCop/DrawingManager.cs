@@ -24,11 +24,11 @@ namespace LeanCop
             this.canvas = canvas;
         }
 
-        public void drawProof(String matrixString, String connections)
+        public void drawProof(String[,] matrix, List<Connection> connections)
         {
             canvas.Children.Clear();
 
-            this.matrix = get2dMatrix(matrixString);
+            this.matrix = matrix;
             this._colWidth = new double[this.matrix.GetLength(0)];
             this._colOffset = new double[this.matrix.GetLength(0)];
 
@@ -45,40 +45,6 @@ namespace LeanCop
             double width = colOffset(lastCol()) + colWidth(lastCol());
             double heigth = matrix.GetLength(1) * 100 - 50;
             return new Size(width, heigth);
-        }
-
-        private string[,] get2dMatrix(string matrix)
-        {
-            var re = new Regex(@"\[[-a-zA-Z()_0-9]+(,[-a-zA-Z()_0-9]+)*\]");
-            String[] columns = re.Matches(matrix)
-                .OfType<Match>()
-                .Select(m => m.Groups[0].Value)
-                .ToArray();
-
-            int height = 0, width = 0;
-            width = columns.Length;
-            foreach (String col in columns)
-            {
-                int colHeigth = col.Split(',').Length;
-                if (colHeigth > height)
-                    height = colHeigth;
-            }
-
-            String[,] ret = new String[width, height];
-
-            for (int x = 0; x < width; x++ )
-            {
-                String[] rows = columns[x].Split(',');
-                for (int y = 0; y < rows.Length; y++)
-                {
-                    String text = rows[y].Replace("[", "").Replace("]","");
-
-                    ret[x, y] = text;
-                }
-
-            }
-
-           return ret;
         }
 
         private void drawMatrix()
@@ -119,16 +85,13 @@ namespace LeanCop
 
         private double colOffset(int n)
         {
+            if (n == 0)
+                return 0;
             // Lazy evaluation
             if (this._colOffset[n] != 0)
                 return this._colOffset[n];
 
-            double offset = 0;
-            for (int i = 0; i < n; i++)
-            {
-                offset += colWidth(i);
-            }
-            offset += n * 20;
+            double offset = colOffset(n - 1) + colWidth(n - 1) + 20;
 
             return this._colOffset[n] = offset;
         }
@@ -139,26 +102,11 @@ namespace LeanCop
             return new Point(colOffset(x), y*100);
         }
 
-        private void drawConnections(string connections)
+        private void drawConnections(List<Connection> connections)
         {
-            var re = new Regex(@"\([0-9]+,[0-9]+\),\([0-9]+,[0-9]+\)");
-            String[] pairs = re.Matches(connections)
-                .OfType<Match>()
-                .Select(m => m.Groups[0].Value)
-                .ToArray();
-
-            var num = new Regex(@"[0-9]+");
-            foreach (String pair in pairs)
+            foreach (Connection c in connections)
             {
-                String[] nums = num.Matches(pair)
-                    .OfType<Match>()
-                    .Select(m => m.Groups[0].Value)
-                    .ToArray();
-                Line line = new Line();
-
-
-                drawConnection(int.Parse(nums[0]), int.Parse(nums[1]), int.Parse(nums[2]), int.Parse(nums[3]));
-
+                drawConnection(c.x1, c.y1, c.x2, c.y2);
             }
         }
 
