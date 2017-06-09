@@ -19,6 +19,9 @@ namespace LeanCop
         private double[] _colWidth;
         private double[] _colOffset;
 
+        private static double MARGIN = 10;
+        private static double BRACKET_MARGIN = 2;
+
         public DrawingManager(Canvas canvas)
         {
             this.canvas = canvas;
@@ -34,6 +37,7 @@ namespace LeanCop
 
             drawConnections(connections);
             drawMatrix();
+            drawBrackets();
 
             Size canvasSize = drawingSize();
             canvas.Width = canvasSize.Width;
@@ -42,8 +46,8 @@ namespace LeanCop
 
         private Size drawingSize()
         {
-            double width = colOffset(lastCol()) + colWidth(lastCol());
-            double heigth = matrix.GetLength(1) * 100 - 50;
+            double width = colOffset(lastCol()) + colWidth(lastCol()) + MARGIN*2;
+            double heigth = matrix.GetLength(1) * 100 - 75 + MARGIN*2;
             return new Size(width, heigth);
         }
 
@@ -86,7 +90,7 @@ namespace LeanCop
         private double colOffset(int n)
         {
             if (n == 0)
-                return 0;
+                return MARGIN;
             // Lazy evaluation
             if (this._colOffset[n] != 0)
                 return this._colOffset[n];
@@ -171,6 +175,35 @@ namespace LeanCop
         private int lastRow()
         {
             return this.matrix.GetLength(1) - 1;
+        }
+
+        private void drawBrackets()
+        {
+            Size s = drawingSize();
+
+            Polyline lbracket = new Polyline();
+            var lpoints = new PointCollection(4);
+            lpoints.Add(new Point(BRACKET_MARGIN + 10, BRACKET_MARGIN));
+            lpoints.Add(new Point(BRACKET_MARGIN, BRACKET_MARGIN));
+            lpoints.Add(new Point(BRACKET_MARGIN, s.Height - BRACKET_MARGIN));
+            lpoints.Add(new Point(BRACKET_MARGIN + 10, s.Height - BRACKET_MARGIN));
+            lbracket.Points = lpoints;
+
+            Polyline rbracket = new Polyline();
+            var rpoints = new PointCollection(4);
+            rpoints.Add(new Point(s.Width - BRACKET_MARGIN - 10, BRACKET_MARGIN));
+            rpoints.Add(new Point(s.Width - BRACKET_MARGIN, BRACKET_MARGIN));
+            rpoints.Add(new Point(s.Width - BRACKET_MARGIN, s.Height - BRACKET_MARGIN));
+            rpoints.Add(new Point(s.Width - BRACKET_MARGIN - 10, s.Height - BRACKET_MARGIN));
+            rbracket.Points = rpoints;
+
+            lbracket.Stroke = Brushes.Black;
+            rbracket.Stroke = Brushes.Black;
+            lbracket.StrokeThickness = 2;
+            rbracket.StrokeThickness = 2;
+
+            canvas.Children.Add(lbracket);
+            canvas.Children.Add(rbracket);
         }
     }
 }
